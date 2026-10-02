@@ -1,0 +1,119 @@
+## SYNTAX TEST "Packages/Efene/Efene.sublime-syntax"
+
+@import(orm.query, [filter/2, values/2])
+## <- punctuation.definition.annotation
+##^^^^^ variable.annotation
+##      ^^^^^^^^^ constant.other.symbol.module
+##                  ^^^^^^ constant.other.symbol
+##                        ^ keyword.operator
+##                         ^ constant.numeric.integer
+
+fn add @public
+## <- storage.type.function
+## ^^^ entity.name.function
+##     ^ punctuation.definition.annotation
+##      ^^^^^^ variable.annotation
+  @doc("adds \"two\" numbers")
+##^ punctuation.definition.annotation
+## ^^^ variable.annotation
+##     ^^^^^^^^^^^^^^^^^^^^^^ comment.block.documentation
+##                           ^ - comment
+##           ^^ constant.character.escape
+  case A, B when is_integer(A): A + B
+##^^^^ keyword.control
+##     ^ variable.other
+##          ^^^^ keyword.control
+##               ^^^^^^^^^^ variable.function
+##                            ^ punctuation.separator
+##                                ^ keyword.operator
+  else: error
+##^^^^ keyword.control
+##      ^^^^^ constant.other.symbol
+end
+## <- keyword.control
+
+fn main case:
+## <- storage.type.function
+## ^^^^ entity.name.function
+##      ^^^^ keyword.control
+  Users = models.user.objects() -> filter({age__gte: 18, name: 'Ann'})
+##^^^^^ variable.other
+##        ^^^^^^^^^^^^ support.module
+##                    ^^^^^^^ variable.function
+##                              ^^ keyword.operator.arrow
+##                                 ^^^^^^ variable.function
+##                                        ^ punctuation.section.braces.begin
+##                                         ^^^^^^^^ meta.mapping.key
+##                                                 ^ punctuation.separator.key-value
+##                                                   ^^ constant.numeric.integer
+##                                                       ^^^^ meta.mapping.key
+##                                                             ^^^^^ string.quoted.single
+  F = fn lists.map:2
+##    ^^ storage.type.function
+##       ^^^^^^ support.module
+##             ^^^ variable.function
+##                ^ punctuation.separator.arity
+##                 ^ constant.numeric.integer
+  Inc = fn case X: X + 1 end
+##      ^^ storage.type.function
+##         ^^^^ keyword.control
+##              ^ variable.other
+  fn case X: X end
+##^^ storage.type.function
+##   ^^^^ keyword.control - entity.name.function
+  io.format("~p items~n", [length(Users)])
+##^^^ support.module
+##   ^^^^^^ variable.function
+##          ^^^^^^^^^^^^ string.quoted.double
+##           ^^ constant.other.placeholder
+##                   ^^ constant.other.placeholder
+##                         ^^^^^^ variable.function
+  `Elixir.Postgrex`.query(Conn, Sql, [])
+##^^^^^^^^^^^^^^^^^^ support.module
+##                  ^^^^^ variable.function
+  Mod.Fun(1, 2.5e3, true)
+##^^^^ support.module
+##    ^^^ variable.function
+##           ^^^^^ constant.numeric.float
+##                  ^^^^ constant.language.boolean
+  H :: T = [1, 2]
+##  ^^ keyword.operator.cons
+  _ = #i module
+##^ variable.language.anonymous
+##    ^ punctuation.definition.tag
+##     ^ keyword.other.tag
+##       ^^^^^^ constant.other.symbol
+  #r.account.username Account
+##^ punctuation.definition.tag
+## ^^^^^^^^^^^^^^^^^^ keyword.other.tag
+##                    ^^^^^^^ variable.other
+  #c "a"
+## ^ keyword.other.tag
+##   ^^^ string.quoted.double
+  #ct fact(10)
+## ^^ keyword.other.tag
+##    ^^^^ variable.function
+  #q ({a: 1} | ~{b: 2})
+## ^ keyword.other.tag
+##           ^ keyword.operator
+##             ^ keyword.operator
+  ^b for X in Xs: X end
+##^ punctuation.definition.tag
+## ^ keyword.other.tag
+##   ^^^ keyword.control
+##         ^^ keyword.control
+  A ^ B
+##  ^ keyword.operator - punctuation.definition.tag
+  X = `an atom`
+##    ^^^^^^^^^ constant.other.symbol.quoted
+  ok when A and not B
+##   ^^^^ keyword.control
+##          ^^^ keyword.operator.word
+##              ^^^ keyword.operator.word
+  match X:
+##^^^^^ keyword.control
+    case (ok, V): V
+##  ^^^^ keyword.control
+##        ^^ constant.other.symbol
+  end
+end

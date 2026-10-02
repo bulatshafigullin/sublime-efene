@@ -1,0 +1,213 @@
+%YAML 1.2
+---
+# Efene syntax for Sublime Text 3 and 4, https://github.com/efene/efene
+# efene has no comments, @doc strings are scoped as documentation instead
+name: Efene
+file_extensions:
+  - fn
+  - hfn
+scope: source.efene
+
+variables:
+  atom: '[a-z][A-Za-z0-9_@]*'
+  var: '[A-Z_][A-Za-z0-9_]*'
+  keyword: '(?:fn|case|else|end|match|when|try|catch|after|receive|begin|for|in|do|if|def|cond|let|of)'
+  word_op: '(?:andd|and|orr|or|xor|not|isnt|is)'
+
+contexts:
+  main:
+    - include: doc
+    - include: function-reference
+    - include: function-definition
+    - include: expressions
+
+  # at the same position the first rule wins: fn refs before the fn keyword,
+  # keywords before calls (case (..)), calls before strings (`Mod`.f())
+  expressions:
+    - include: function-reference
+    - include: keywords
+    - include: calls
+    - include: strings
+    - include: numbers
+    - include: attributes
+    - include: tags
+    - include: maps
+    - include: brackets
+    - include: operators
+    - include: variables
+    - include: atoms
+    - include: punctuation
+
+  # fn name ... at the start of a line is a top level function
+  function-definition:
+    - match: '^\s*(fn)\s+(?!{{keyword}}\b)({{atom}}|`(?:\\.|[^`])*`)'
+      captures:
+        1: storage.type.function.efene keyword.declaration.function.efene
+        2: entity.name.function.efene
+
+  # fn lists.map:2, fn foo:1
+  function-reference:
+    - match: '\b(fn)\s+((?:(?:{{atom}}|{{var}})\.)*)({{atom}}|{{var}})(:)(\d+)'
+      captures:
+        1: storage.type.function.efene keyword.declaration.function.efene
+        2: support.module.efene
+        3: variable.function.efene
+        4: punctuation.separator.arity.efene
+        5: constant.numeric.integer.efene
+
+  doc:
+    - match: '(@)(doc)\s*(\()\s*(")'
+      captures:
+        1: punctuation.definition.annotation.efene
+        2: meta.annotation.efene variable.annotation.efene
+        3: punctuation.section.parens.begin.efene
+        4: comment.block.documentation.efene punctuation.definition.comment.begin.efene
+      push:
+        - meta_scope: comment.block.documentation.efene
+        - match: '\\.'
+          scope: constant.character.escape.efene
+        - match: '"'
+          scope: punctuation.definition.comment.end.efene
+          pop: true
+
+  attributes:
+    - include: doc
+    - match: '(@)({{atom}}(?:\.{{atom}})*)'
+      captures:
+        1: punctuation.definition.annotation.efene
+        2: meta.annotation.efene variable.annotation.efene
+
+  # #i module, #r.account.username, #c "a", #ct f(), ^b for ...
+  tags:
+    - match: '(#)(_)'
+      captures:
+        1: punctuation.definition.tag.efene
+        2: keyword.other.tag.efene
+    - match: '(#)({{atom}}(?:\.{{atom}})*)'
+      captures:
+        1: punctuation.definition.tag.efene
+        2: keyword.other.tag.efene
+    - match: '(?<![A-Za-z0-9_)\]}''"`])(\^)({{atom}}(?:\.{{atom}})*)'
+      captures:
+        1: punctuation.definition.tag.efene
+        2: keyword.other.tag.efene
+
+  keywords:
+    - match: '\b(?:true|false)\b'
+      scope: constant.language.boolean.efene
+    - match: '\bfn\b'
+      scope: storage.type.function.efene keyword.declaration.function.efene
+    - match: '\b{{keyword}}\b'
+      scope: keyword.control.efene
+    - match: '\b{{word_op}}\b'
+      scope: keyword.operator.word.efene
+
+  # foo(), lists.map(), shapes.geo.point.new(), Mod.fun(), `Elixir.Postgrex`.query()
+  calls:
+    - match: '((?:(?:{{atom}}|{{var}}|`(?:\\.|[^`])*`)\.)+)({{atom}}|{{var}})(?=\s*\()'
+      captures:
+        1: support.module.efene
+        2: variable.function.efene
+    - match: '\b({{atom}})(?=\s*\()'
+      captures:
+        1: variable.function.efene
+
+  strings:
+    - match: '"'
+      scope: punctuation.definition.string.begin.efene
+      push:
+        - meta_scope: string.quoted.double.efene
+        - include: string-content
+        - match: '"'
+          scope: punctuation.definition.string.end.efene
+          pop: true
+    # binary strings
+    - match: "'"
+      scope: punctuation.definition.string.begin.efene
+      push:
+        - meta_scope: string.quoted.single.efene
+        - include: string-content
+        - match: "'"
+          scope: punctuation.definition.string.end.efene
+          pop: true
+    # `quoted atom`
+    - match: '`'
+      scope: punctuation.definition.symbol.begin.efene
+      push:
+        - meta_scope: constant.other.symbol.quoted.efene
+        - match: '\\.'
+          scope: constant.character.escape.efene
+        - match: '`'
+          scope: punctuation.definition.symbol.end.efene
+          pop: true
+
+  string-content:
+    - match: '\\(?:\^.|.)'
+      scope: constant.character.escape.efene
+    # io:format directives
+    - match: '~(?:\d+|\*)?(?:\.(?:\d+|\*)?)?(?:\.(?:\d+|\*)?)?[tlk]?[~cfegswpWPBXx#bn+i]'
+      scope: constant.other.placeholder.efene
+
+  numbers:
+    - match: '\b\d+\.\d+(?:[eE][-+]?\d+)?\b'
+      scope: constant.numeric.float.efene
+    - match: '\b\d+\b'
+      scope: constant.numeric.integer.efene
+
+  # map keys are the atoms before ":" inside { }
+  maps:
+    - match: '\{'
+      scope: punctuation.section.braces.begin.efene
+      push:
+        - meta_scope: meta.mapping.efene
+        - match: '\}'
+          scope: punctuation.section.braces.end.efene
+          pop: true
+        - match: '\b({{atom}})\s*(:)(?![:=])'
+          captures:
+            1: meta.mapping.key.efene constant.other.symbol.efene
+            2: punctuation.separator.key-value.efene
+        - include: expressions
+
+  brackets:
+    - match: '\('
+      scope: punctuation.section.parens.begin.efene
+    - match: '\)'
+      scope: punctuation.section.parens.end.efene
+    - match: '\['
+      scope: punctuation.section.brackets.begin.efene
+    - match: '\]'
+      scope: punctuation.section.brackets.end.efene
+    - match: '\}'
+      scope: punctuation.section.braces.end.efene
+
+  operators:
+    - match: '->>|->|<<-|<-|=>'
+      scope: keyword.operator.arrow.efene
+    - match: '::'
+      scope: keyword.operator.cons.efene
+    - match: ':=|\+\+|--|==|!=|<=|>=|<<|>>|//|[-+*/%<>=!|&^~]'
+      scope: keyword.operator.efene
+
+  variables:
+    - match: '\b_\b'
+      scope: variable.language.anonymous.efene
+    - match: '\b{{var}}\b'
+      scope: variable.other.efene
+
+  atoms:
+    # a dotted name that isn't called is a module name: orm.query
+    - match: '\b{{atom}}(?:\.{{atom}})+\b(?!\s*[.(])'
+      scope: constant.other.symbol.module.efene
+    - match: '\b{{atom}}\b'
+      scope: constant.other.symbol.efene
+
+  punctuation:
+    - match: ','
+      scope: punctuation.separator.sequence.efene
+    - match: ';'
+      scope: punctuation.terminator.efene
+    - match: ':'
+      scope: punctuation.separator.efene
+    - match: '\.'
+      scope: punctuation.accessor.efene
